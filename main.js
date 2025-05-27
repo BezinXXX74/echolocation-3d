@@ -1,6 +1,9 @@
 // Esperar o DOM carregar completamente
 window.addEventListener('load', init);
 
+let scene, camera, renderer;
+let bat, waves = [];
+
 function init() {
     // Verificar se Three.js está carregado
     if (typeof THREE === 'undefined') {
@@ -16,13 +19,16 @@ function init() {
         return;
     }
 
-    // Configuração da cena Three.js
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x000000); // Fundo totalmente preto
+    // Cena
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x000000);
 
-    // Configuração da câmera e renderer
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    // Câmera
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.z = 10;
+
+    // Renderer
+    renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -169,136 +175,21 @@ function init() {
 
         createFurniture();
 
-        // Criação do "morcego" (emissor de som)
-        const createBat = () => {
-            const group = new THREE.Group();
-
-            // Corpo principal com material emissivo
-            const bodyGeometry = new THREE.ConeGeometry(0.3, 1, 32);
-            const bodyMaterial = new THREE.MeshBasicMaterial({ 
-                color: 0x444444,
-                emissive: 0x222222
-            });
-            const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
-            body.rotation.x = Math.PI / 2;
-            group.add(body);
-
-            // Asas com efeito de brilho
-            const wingGeometry = new THREE.BoxGeometry(2, 0.1, 0.5);
-            const wingMaterial = new THREE.MeshBasicMaterial({ 
-                color: 0x333333,
-                emissive: 0x111111
-            });
-            const leftWing = new THREE.Mesh(wingGeometry, wingMaterial);
-            const rightWing = new THREE.Mesh(wingGeometry, wingMaterial);
-            leftWing.position.set(-1, 0, 0);
-            rightWing.position.set(1, 0, 0);
-            group.add(leftWing);
-            group.add(rightWing);
-
-            // Adicionar pequena luz ao morcego
-            const batLight = new THREE.PointLight(0x00ff88, 0.5, 3);
-            batLight.position.set(0, 0, 0);
-            group.add(batLight);
-
-            return group;
-        };
-
-        const bat = createBat();
-        bat.position.set(0, 3, 0);
+        // Morcego
+        const batGeometry = new THREE.ConeGeometry(0.5, 1, 32);
+        const batMaterial = new THREE.MeshBasicMaterial({ 
+            color: 0x00ff00,
+            wireframe: true 
+        });
+        bat = new THREE.Mesh(batGeometry, batMaterial);
         scene.add(bat);
 
-        // Classe para criar ondas sonoras melhoradas
-        class SoundWave {
-            constructor(position) {
-                // Geometria mais complexa para melhor visualização
-                const geometry = new THREE.IcosahedronGeometry(0.1, 2);
-                const material = new THREE.MeshBasicMaterial({
-                    color: 0x00ff88,
-                    transparent: true,
-                    opacity: 0.8,
-                    wireframe: true,
-                    wireframeLinewidth: 2
-                });
-                this.mesh = new THREE.Mesh(geometry, material);
-                this.mesh.position.copy(position);
-                
-                // Adicionar brilho (glow effect)
-                const glowGeometry = new THREE.IcosahedronGeometry(0.12, 2);
-                const glowMaterial = new THREE.MeshBasicMaterial({
-                    color: 0x00ff88,
-                    transparent: true,
-                    opacity: 0.3,
-                    side: THREE.BackSide
-                });
-                this.glow = new THREE.Mesh(glowGeometry, glowMaterial);
-                this.mesh.add(this.glow);
-
-                this.speed = 0.3;
-                this.maxRadius = 15;
-                scene.add(this.mesh);
-
-                // Adicionar linhas de rastreamento
-                const lineGeometry = new THREE.BufferGeometry();
-                const lineMaterial = new THREE.LineBasicMaterial({
-                    color: 0x00ff88,
-                    transparent: true,
-                    opacity: 0.3
-                });
-                this.lines = new THREE.Line(lineGeometry, lineMaterial);
-                scene.add(this.lines);
-            }
-
-            update() {
-                this.mesh.scale.x += this.speed;
-                this.mesh.scale.y += this.speed;
-                this.mesh.scale.z += this.speed;
-                
-                const currentRadius = this.mesh.scale.x * 0.1;
-                const opacity = 1 - (currentRadius / this.maxRadius);
-                
-                this.mesh.material.opacity = opacity * 0.8;
-                this.glow.material.opacity = opacity * 0.3;
-                
-                // Atualizar linhas de rastreamento
-                const positions = [];
-                for (let i = 0; i < 32; i++) {
-                    const angle = (i / 32) * Math.PI * 2;
-                    const radius = currentRadius;
-                    positions.push(
-                        Math.cos(angle) * radius + this.mesh.position.x,
-                        Math.sin(angle) * radius + this.mesh.position.y,
-                        this.mesh.position.z
-                    );
-                }
-                this.lines.geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-                this.lines.material.opacity = opacity * 0.3;
-
-                return currentRadius < this.maxRadius;
-            }
-
-            remove() {
-                scene.remove(this.mesh);
-                scene.remove(this.lines);
-            }
-        }
-
-        // Array para armazenar ondas sonoras ativas
-        let activeWaves = [];
-        let autoEmitEnabled = false;
+        // Eventos
+        window.addEventListener('keydown', onKeyDown);
+        window.addEventListener('resize', onWindowResize);
 
         // Função para emitir uma nova onda sonora
-        window.emitSoundWave = () => {
-            const wave = new SoundWave(bat.position);
-            activeWaves.push(wave);
-        };
-
-        // Função para alternar emissão automática
-        window.toggleAutoEmit = () => {
-            autoEmitEnabled = !autoEmitEnabled;
-            const autoEmitButton = document.querySelector('button[onclick="toggleAutoEmit()"]');
-            autoEmitButton.style.background = autoEmitEnabled ? '#ff4444' : '#4CAF50';
-        };
+        window.emitWave = emitWave;
 
         // Função para resetar a câmera
         window.resetCamera = () => {
@@ -307,56 +198,6 @@ function init() {
             controls.target.set(0, 0, 0);
             controls.update();
         };
-
-        // Configurar controles de movimento do morcego
-        const moveSpeed = 0.2;
-        const keys = {};
-
-        // Controles de teclado
-        window.addEventListener('keydown', (e) => keys[e.key] = true);
-        window.addEventListener('keyup', (e) => keys[e.key] = false);
-
-        // Controles touch
-        const setupTouchControls = () => {
-            const directions = {
-                up: document.getElementById('up'),
-                down: document.getElementById('down'),
-                left: document.getElementById('left'),
-                right: document.getElementById('right')
-            };
-
-            const activeMoves = new Set();
-
-            const startMove = (direction) => {
-                activeMoves.add(direction);
-            };
-
-            const stopMove = (direction) => {
-                activeMoves.delete(direction);
-            };
-
-            Object.entries(directions).forEach(([direction, button]) => {
-                if (button) {
-                    button.addEventListener('touchstart', (e) => {
-                        e.preventDefault();
-                        startMove(direction);
-                    });
-
-                    button.addEventListener('touchend', (e) => {
-                        e.preventDefault();
-                        stopMove(direction);
-                    });
-
-                    button.addEventListener('mousedown', () => startMove(direction));
-                    button.addEventListener('mouseup', () => stopMove(direction));
-                    button.addEventListener('mouseleave', () => stopMove(direction));
-                }
-            });
-
-            return activeMoves;
-        };
-
-        const activeMoves = setupTouchControls();
 
         // Posicionar a câmera inicialmente
         resetCamera();
@@ -368,48 +209,18 @@ function init() {
             // Atualizar controles de órbita
             controls.update();
             
-            // Mover o morcego com base nos controles ativos
-            const direction = new THREE.Vector3();
-            
-            if (keys['ArrowLeft'] || activeMoves.has('left')) direction.x -= 1;
-            if (keys['ArrowRight'] || activeMoves.has('right')) direction.x += 1;
-            if (keys['ArrowUp'] || activeMoves.has('up')) direction.z -= 1;
-            if (keys['ArrowDown'] || activeMoves.has('down')) direction.z += 1;
-            if (keys['Shift']) direction.y += 1;
-            if (keys['Control']) direction.y -= 1;
-
-            // Normalizar a direção e aplicar velocidade
-            if (direction.length() > 0) {
-                direction.normalize();
-                bat.position.x += direction.x * moveSpeed;
-                bat.position.y += direction.y * moveSpeed;
-                bat.position.z += direction.z * moveSpeed;
-
-                // Rotacionar o morcego na direção do movimento
-                if (direction.x !== 0 || direction.z !== 0) {
-                    const targetRotation = Math.atan2(direction.x, direction.z);
-                    bat.rotation.y = targetRotation;
+            // Atualizar ondas
+            for(let i = waves.length - 1; i >= 0; i--) {
+                const wave = waves[i];
+                wave.scale += 0.1;
+                wave.mesh.scale.set(wave.scale, wave.scale, wave.scale);
+                wave.mesh.material.opacity = 1 - (wave.scale / 10);
+                
+                if (wave.scale > 10) {
+                    scene.remove(wave.mesh);
+                    waves.splice(i, 1);
                 }
             }
-
-            // Limitar posição do morcego dentro da casa
-            bat.position.x = Math.max(-9, Math.min(9, bat.position.x));
-            bat.position.y = Math.max(1, Math.min(7, bat.position.y));
-            bat.position.z = Math.max(-9, Math.min(9, bat.position.z));
-            
-            // Auto-emitir ondas sonoras
-            if (autoEmitEnabled && Math.random() < 0.02) {
-                emitSoundWave();
-            }
-            
-            // Atualizar ondas sonoras
-            activeWaves = activeWaves.filter(wave => {
-                const keepWave = wave.update();
-                if (!keepWave) {
-                    wave.remove();
-                }
-                return keepWave;
-            });
             
             renderer.render(scene, camera);
         }
@@ -430,4 +241,55 @@ function init() {
         console.error('Erro durante a inicialização:', error);
         alert('Ocorreu um erro ao inicializar a simulação. Por favor, recarregue a página.');
     }
+}
+
+function emitWave() {
+    const waveGeometry = new THREE.SphereGeometry(0.1, 16, 16);
+    const waveMaterial = new THREE.MeshBasicMaterial({
+        color: 0x00ff00,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.8
+    });
+    const wave = {
+        mesh: new THREE.Mesh(waveGeometry, waveMaterial),
+        scale: 0.1
+    };
+    wave.mesh.position.copy(bat.position);
+    scene.add(wave.mesh);
+    waves.push(wave);
+}
+
+function onKeyDown(event) {
+    const speed = 0.5;
+    switch(event.key) {
+        case 'ArrowLeft':
+            bat.position.x -= speed;
+            break;
+        case 'ArrowRight':
+            bat.position.x += speed;
+            break;
+        case 'ArrowUp':
+            bat.position.y += speed;
+            break;
+        case 'ArrowDown':
+            bat.position.y -= speed;
+            break;
+        case ' ':
+            emitWave();
+            break;
+    }
+}
+
+function onWindowResize() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+function resetCamera() {
+    camera.position.set(0, 10, 15);
+    camera.lookAt(0, 0, 0);
+    controls.target.set(0, 0, 0);
+    controls.update();
 } 
