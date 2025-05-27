@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Simulação de Ecolocalização 3D</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+            touch-action: none;
+        }
+        canvas {
+            width: 100%;
+            height: 100%;
+        }
+        #info {
+            position: absolute;
+            top: 10px;
+            width: 100%;
+            color: white;
+            text-align: center;
+            font-family: Arial, sans-serif;
+            padding: 10px;
+            z-index: 100;
+            font-size: 16px;
+        }
+        #controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 15px;
+            z-index: 100;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            width: 90%;
+            max-width: 400px;
+        }
+        button {
+            background: #4CAF50;
+            border: none;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 16px;
+            min-width: 120px;
+            touch-action: manipulation;
+        }
+        button:hover, button:active {
+            background: #45a049;
+        }
+        #instructions {
+            position: absolute;
+            top: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 15px;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            text-align: center;
+            width: 90%;
+            max-width: 400px;
+        }
+        #movement-controls {
+            position: absolute;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+            z-index: 100;
+            width: 180px;
+        }
+        .direction-btn {
+            background: rgba(76, 175, 80, 0.7);
+            border: none;
+            color: white;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            touch-action: manipulation;
+        }
+        .direction-btn:active {
+            background: rgba(76, 175, 80, 0.9);
+        }
+        @media (max-width: 600px) {
+            button {
+                padding: 12px 20px;
+                font-size: 14px;
+                min-width: 100px;
+            }
+            #instructions {
+                font-size: 12px;
+            }
+            .direction-btn {
+                width: 50px;
+                height: 50px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="info">Simulação de Ecolocalização 3D</div>
+    <div id="instructions">
+        📱 Arraste para girar a câmera<br>
+        🔍 Pinça para zoom<br>
+        ⬆️ Use os botões direcionais para mover
+    </div>
+    <div id="movement-controls">
+        <div></div>
+        <button class="direction-btn" id="up">⬆️</button>
+        <div></div>
+        <button class="direction-btn" id="left">⬅️</button>
+        <button class="direction-btn" id="down">⬇️</button>
+        <button class="direction-btn" id="right">➡️</button>
+    </div>
+    <div id="controls">
+        <button onclick="emitSoundWave()">Emitir Som</button>
+        <button onclick="toggleAutoEmit()">Auto-Emitir</button>
+        <button onclick="resetCamera()">Resetar</button>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/controls/OrbitControls.js"></script>
+    <script src="main.js"></script>
+</body>
+</html> 
