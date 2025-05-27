@@ -18,7 +18,7 @@ function init() {
 
     // Configuração da cena Three.js
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x222222);
+    scene.background = new THREE.Color(0x111111);
 
     // Configuração da câmera
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -39,20 +39,39 @@ function init() {
         controls.maxPolarAngle = Math.PI / 2;
 
         // Configuração da iluminação
-        const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
         scene.add(ambientLight);
 
+        // Luz principal
         const mainLight = new THREE.DirectionalLight(0xffffff, 0.8);
-        mainLight.position.set(5, 5, 5);
+        mainLight.position.set(5, 8, 5);
         mainLight.castShadow = true;
         mainLight.shadow.mapSize.width = 2048;
         mainLight.shadow.mapSize.height = 2048;
+        mainLight.shadow.camera.near = 0.5;
+        mainLight.shadow.camera.far = 50;
+        mainLight.shadow.camera.left = -15;
+        mainLight.shadow.camera.right = 15;
+        mainLight.shadow.camera.top = 15;
+        mainLight.shadow.camera.bottom = -15;
         scene.add(mainLight);
+
+        // Luzes adicionais para melhor visibilidade
+        const createPointLight = (x, y, z, intensity = 0.5) => {
+            const light = new THREE.PointLight(0xffffff, intensity);
+            light.position.set(x, y, z);
+            scene.add(light);
+        };
+
+        createPointLight(-5, 5, -5, 0.4);
+        createPointLight(5, 5, -5, 0.4);
+        createPointLight(-5, 5, 5, 0.4);
+        createPointLight(5, 5, 5, 0.4);
 
         // Criar chão
         const floorGeometry = new THREE.PlaneGeometry(20, 20);
         const floorMaterial = new THREE.MeshPhongMaterial({ 
-            color: 0x808080,
+            color: 0xCCCCCC,
             side: THREE.DoubleSide
         });
         const floor = new THREE.Mesh(floorGeometry, floorMaterial);
@@ -60,10 +79,13 @@ function init() {
         floor.receiveShadow = true;
         scene.add(floor);
 
-        // Criar paredes
+        // Criar paredes com textura
         const createWall = (width, height, depth, x, y, z) => {
             const wallGeometry = new THREE.BoxGeometry(width, height, depth);
-            const wallMaterial = new THREE.MeshPhongMaterial({ color: 0xcccccc });
+            const wallMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0xE8E8E8,
+                shininess: 10
+            });
             const wall = new THREE.Mesh(wallGeometry, wallMaterial);
             wall.position.set(x, y, z);
             wall.castShadow = true;
@@ -78,11 +100,14 @@ function init() {
         createWall(0.2, 8, 20, 10, 4, 0); // Parede direita
         createWall(0.2, 8, 20, -10, 4, 0); // Parede esquerda
 
-        // Criar móveis
+        // Criar móveis com cores mais vibrantes
         const createFurniture = () => {
             // Mesa
             const tableGeometry = new THREE.BoxGeometry(3, 1, 2);
-            const tableMaterial = new THREE.MeshPhongMaterial({ color: 0x8B4513 });
+            const tableMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0x8B4513,
+                shininess: 30
+            });
             const table = new THREE.Mesh(tableGeometry, tableMaterial);
             table.position.set(0, 0.5, 0);
             table.castShadow = true;
@@ -91,7 +116,10 @@ function init() {
 
             // Sofá
             const couchGeometry = new THREE.BoxGeometry(4, 1.5, 1.5);
-            const couchMaterial = new THREE.MeshPhongMaterial({ color: 0x666666 });
+            const couchMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0x4169E1,
+                shininess: 20
+            });
             const couch = new THREE.Mesh(couchGeometry, couchMaterial);
             couch.position.set(-5, 0.75, -7);
             couch.castShadow = true;
@@ -100,7 +128,10 @@ function init() {
 
             // Estante
             const bookshelfGeometry = new THREE.BoxGeometry(3, 4, 0.5);
-            const bookshelfMaterial = new THREE.MeshPhongMaterial({ color: 0x8B4513 });
+            const bookshelfMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0x8B4513,
+                shininess: 30
+            });
             const bookshelf = new THREE.Mesh(bookshelfGeometry, bookshelfMaterial);
             bookshelf.position.set(8, 2, -8);
             bookshelf.castShadow = true;
@@ -109,7 +140,10 @@ function init() {
 
             // TV
             const tvGeometry = new THREE.BoxGeometry(4, 2.5, 0.2);
-            const tvMaterial = new THREE.MeshPhongMaterial({ color: 0x000000 });
+            const tvMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0x000000,
+                shininess: 90
+            });
             const tv = new THREE.Mesh(tvGeometry, tvMaterial);
             tv.position.set(0, 3, 9.8);
             tv.castShadow = true;
@@ -117,7 +151,10 @@ function init() {
 
             // Rack da TV
             const rackGeometry = new THREE.BoxGeometry(5, 1, 1);
-            const rackMaterial = new THREE.MeshPhongMaterial({ color: 0x8B4513 });
+            const rackMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0x8B4513,
+                shininess: 30
+            });
             const rack = new THREE.Mesh(rackGeometry, rackMaterial);
             rack.position.set(0, 0.5, 9);
             rack.castShadow = true;
@@ -177,25 +214,28 @@ function init() {
                     opacity: 0.9
                 });
                 const mainWing = new THREE.Mesh(mainWingGeometry, wingMaterial);
+                mainWing.rotation.x = Math.PI / 2; // Rotacionar para ficar na horizontal
                 
                 // "Dedos" da asa
                 const fingerMaterial = new THREE.MeshPhongMaterial({ color: 0x1a1a1a });
                 const createFinger = (length, angle, posX, posY) => {
                     const fingerGeometry = new THREE.CylinderGeometry(0.02, 0.01, length);
                     const finger = new THREE.Mesh(fingerGeometry, fingerMaterial);
+                    finger.rotation.x = Math.PI / 2; // Alinhar com a membrana
                     finger.rotation.z = angle;
-                    finger.position.set(posX, posY, 0);
+                    finger.position.set(posX, 0, posY); // Ajustar posição para novo sistema de coordenadas
                     return finger;
                 };
 
-                // Adicionar múltiplos "dedos"
+                // Adicionar múltiplos "dedos" com posições ajustadas
                 wingGroup.add(createFinger(1.5, 0.3, 0.4, -0.2));
                 wingGroup.add(createFinger(1.2, 0.1, 0.2, -0.1));
                 wingGroup.add(createFinger(1.0, -0.1, 0, 0));
 
                 wingGroup.add(mainWing);
                 wingGroup.position.x = isLeft ? -0.3 : 0.3;
-                wingGroup.rotation.y = isLeft ? 0.2 : -0.2;
+                wingGroup.position.y = 0.1; // Levantar um pouco as asas
+                wingGroup.rotation.z = isLeft ? -0.2 : 0.2; // Ajustar ângulo inicial
 
                 return wingGroup;
             };
@@ -209,15 +249,16 @@ function init() {
 
             // Adicionar animação das asas
             const animate = () => {
-                const wingSpeed = 0.15;
-                const wingAmplitude = 0.5;
+                const wingSpeed = 0.08; // Reduzir velocidade
+                const wingAmplitude = 0.3; // Reduzir amplitude
                 
                 // Animação suave das asas
-                leftWing.rotation.z = Math.sin(Date.now() * wingSpeed) * wingAmplitude;
-                rightWing.rotation.z = -Math.sin(Date.now() * wingSpeed) * wingAmplitude;
+                const wingAngle = Math.sin(Date.now() * wingSpeed) * wingAmplitude;
+                leftWing.rotation.z = -0.2 - wingAngle; // Adicionar ao ângulo base
+                rightWing.rotation.z = 0.2 + wingAngle;
                 
-                // Pequena rotação do corpo
-                group.rotation.x = Math.sin(Date.now() * wingSpeed * 0.5) * 0.1;
+                // Pequena oscilação do corpo
+                group.rotation.x = Math.sin(Date.now() * wingSpeed * 0.5) * 0.05;
                 
                 requestAnimationFrame(animate);
             };
@@ -228,7 +269,7 @@ function init() {
 
         const bat = createBat();
         bat.position.set(0, 3, 0);
-        bat.scale.set(0.8, 0.8, 0.8); // Ajustar tamanho geral
+        bat.scale.set(0.6, 0.6, 0.6); // Reduzir um pouco o tamanho
         scene.add(bat);
 
         // Classe para criar ondas sonoras melhoradas
