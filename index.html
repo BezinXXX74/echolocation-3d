@@ -3,143 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ecolocalização 3D - Experiência Interativa</title>
+    <title>Ecolocalização 3D</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
-        
-        * {
+        body {
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Poppins', sans-serif;
-            background: #0a0a0a;
-            color: white;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            overflow: hidden;
-        }
-
-        .container {
-            position: relative;
-            width: 100%;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 2rem;
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%);
+            color: white;
             text-align: center;
-            z-index: 1;
-        }
-
-        .background {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle at center, #1a1a1a 0%, #0a0a0a 70%);
-            z-index: -1;
-        }
-
-        .waves {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            z-index: 0;
-            opacity: 0.5;
-            pointer-events: none;
         }
 
         h1 {
-            font-size: 3.5rem;
-            font-weight: 700;
-            margin-bottom: 1rem;
+            font-size: 3em;
+            margin-bottom: 0.5em;
             background: linear-gradient(45deg, #00ff88, #00ccff);
-            background-clip: text;
             -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-shadow: 0 0 30px rgba(0, 255, 136, 0.3);
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
         }
 
         p {
-            font-size: 1.2rem;
+            font-size: 1.2em;
             max-width: 600px;
-            margin-bottom: 2rem;
-            color: #cccccc;
+            margin: 1em auto;
             line-height: 1.6;
+            color: #cccccc;
         }
 
-        .cta-button {
-            background: linear-gradient(45deg, #00ff88, #00ccff);
-            color: #000;
-            font-size: 1.2rem;
-            font-weight: 600;
-            padding: 1rem 2.5rem;
-            border: none;
-            border-radius: 50px;
-            cursor: pointer;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            text-decoration: none;
+        .start-button {
             display: inline-block;
+            padding: 15px 40px;
+            margin-top: 2em;
+            font-size: 1.2em;
+            text-decoration: none;
+            color: white;
+            background: linear-gradient(45deg, #00ff88, #00ccff);
+            border-radius: 30px;
+            transition: transform 0.3s, box-shadow 0.3s;
+            box-shadow: 0 4px 15px rgba(0, 255, 136, 0.3);
         }
 
-        .cta-button:hover {
+        .start-button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 0 30px rgba(0, 255, 136, 0.5);
+            box-shadow: 0 6px 20px rgba(0, 255, 136, 0.4);
         }
 
-        .bat-icon {
-            width: 150px;
-            height: 150px;
-            margin-bottom: 2rem;
-            filter: drop-shadow(0 0 20px rgba(0, 255, 136, 0.3));
+        .start-button:active {
+            transform: translateY(1px);
         }
 
-        @keyframes wave {
-            0% { transform: scale(1); opacity: 0.8; }
-            100% { transform: scale(2); opacity: 0; }
-        }
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 2em;
+            }
 
-        .wave {
-            position: absolute;
-            border: 2px solid #00ff88;
-            width: 200px;
-            height: 200px;
-            border-radius: 50%;
-            animation: wave 3s infinite;
+            p {
+                font-size: 1em;
+                padding: 0 20px;
+            }
         }
-
-        .wave:nth-child(2) { animation-delay: 1s; }
-        .wave:nth-child(3) { animation-delay: 2s; }
     </style>
 </head>
 <body>
-    <div class="background"></div>
-    <div class="waves">
-        <div class="wave"></div>
-        <div class="wave"></div>
-        <div class="wave"></div>
-    </div>
-    <div class="container">
-        <svg class="bat-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M2 9C2 9 4.5 3 12 3C19.5 3 22 9 22 9M12 16L12 21M8 21H16M4 12C4 16.4183 7.58172 20 12 20C16.4183 20 20 16.4183 20 12C20 7.58172 16.4183 4 12 4C7.58172 4 4 7.58172 4 12Z" stroke="url(#gradient)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <defs>
-                <linearGradient id="gradient" x1="2" y1="3" x2="22" y2="21" gradientUnits="userSpaceOnUse">
-                    <stop offset="0%" stop-color="#00ff88"/>
-                    <stop offset="100%" stop-color="#00ccff"/>
-                </linearGradient>
-            </defs>
-        </svg>
-        <h1>Ecolocalização 3D</h1>
-        <p>Explore o fascinante mundo da ecolocalização nesta experiência interativa 3D. Descubra como os morcegos navegam na escuridão usando ondas sonoras para mapear seu ambiente.</p>
-        <a href="simulation.html" class="cta-button">Iniciar Experiência</a>
-    </div>
+    <h1>Ecolocalização 3D</h1>
+    <p>Explore o fascinante mundo da ecolocalização nesta experiência interativa 3D. Descubra como os morcegos navegam na escuridão usando ondas sonoras para mapear seu ambiente.</p>
+    <a href="simulation.html" class="start-button">Iniciar Experiência</a>
 </body>
 </html> 
