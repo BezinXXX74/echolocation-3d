@@ -18,14 +18,17 @@ function init() {
 
     // Configuração da cena Three.js
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x111111);
+    scene.background = new THREE.Color(0x333333); // Fundo mais escuro para melhor contraste
 
-    // Configuração da câmera
+    // Configuração da câmera e renderer
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.outputEncoding = THREE.sRGBEncoding; // Melhor reprodução de cores
+    renderer.toneMapping = THREE.ACESFilmicToneMapping; // Melhor balanço de luz
+    renderer.toneMappingExposure = 1.0; // Ajuste de exposição
     document.body.appendChild(renderer.domElement);
 
     try {
@@ -39,11 +42,11 @@ function init() {
         controls.maxPolarAngle = Math.PI / 2;
 
         // Configuração da iluminação
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.3); // Reduzir intensidade
         scene.add(ambientLight);
 
         // Luz principal
-        const mainLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        const mainLight = new THREE.DirectionalLight(0xffffff, 0.5); // Reduzir intensidade
         mainLight.position.set(5, 8, 5);
         mainLight.castShadow = true;
         mainLight.shadow.mapSize.width = 2048;
@@ -57,34 +60,35 @@ function init() {
         scene.add(mainLight);
 
         // Luzes adicionais para melhor visibilidade
-        const createPointLight = (x, y, z, intensity = 0.5) => {
-            const light = new THREE.PointLight(0xffffff, intensity);
+        const createPointLight = (x, y, z, intensity = 0.2) => { // Reduzir intensidade
+            const light = new THREE.PointLight(0xffffff, intensity, 15); // Adicionar distância máxima
             light.position.set(x, y, z);
             scene.add(light);
         };
 
-        createPointLight(-5, 5, -5, 0.4);
-        createPointLight(5, 5, -5, 0.4);
-        createPointLight(-5, 5, 5, 0.4);
-        createPointLight(5, 5, 5, 0.4);
+        createPointLight(-5, 5, -5, 0.2);
+        createPointLight(5, 5, -5, 0.2);
+        createPointLight(-5, 5, 5, 0.2);
+        createPointLight(5, 5, 5, 0.2);
 
         // Criar chão
         const floorGeometry = new THREE.PlaneGeometry(20, 20);
         const floorMaterial = new THREE.MeshPhongMaterial({ 
-            color: 0xCCCCCC,
-            side: THREE.DoubleSide
+            color: 0x999999, // Cinza médio
+            side: THREE.DoubleSide,
+            shininess: 10
         });
         const floor = new THREE.Mesh(floorGeometry, floorMaterial);
         floor.rotation.x = -Math.PI / 2;
         floor.receiveShadow = true;
         scene.add(floor);
 
-        // Criar paredes com textura
+        // Criar paredes
         const createWall = (width, height, depth, x, y, z) => {
             const wallGeometry = new THREE.BoxGeometry(width, height, depth);
             const wallMaterial = new THREE.MeshPhongMaterial({ 
-                color: 0xE8E8E8,
-                shininess: 10
+                color: 0xBBBBBB, // Cinza claro
+                shininess: 5
             });
             const wall = new THREE.Mesh(wallGeometry, wallMaterial);
             wall.position.set(x, y, z);
@@ -95,18 +99,18 @@ function init() {
         };
 
         // Paredes da casa
-        createWall(20, 8, 0.2, 0, 4, 10); // Parede fundo
-        createWall(20, 8, 0.2, 0, 4, -10); // Parede frente
-        createWall(0.2, 8, 20, 10, 4, 0); // Parede direita
-        createWall(0.2, 8, 20, -10, 4, 0); // Parede esquerda
+        createWall(20, 8, 0.2, 0, 4, 10);
+        createWall(20, 8, 0.2, 0, 4, -10);
+        createWall(0.2, 8, 20, 10, 4, 0);
+        createWall(0.2, 8, 20, -10, 4, 0);
 
-        // Criar móveis com cores mais vibrantes
+        // Criar móveis
         const createFurniture = () => {
             // Mesa
             const tableGeometry = new THREE.BoxGeometry(3, 1, 2);
             const tableMaterial = new THREE.MeshPhongMaterial({ 
-                color: 0x8B4513,
-                shininess: 30
+                color: 0x5C3A21, // Marrom mais escuro
+                shininess: 20
             });
             const table = new THREE.Mesh(tableGeometry, tableMaterial);
             table.position.set(0, 0.5, 0);
@@ -117,8 +121,8 @@ function init() {
             // Sofá
             const couchGeometry = new THREE.BoxGeometry(4, 1.5, 1.5);
             const couchMaterial = new THREE.MeshPhongMaterial({ 
-                color: 0x4169E1,
-                shininess: 20
+                color: 0x2A4B8D, // Azul mais escuro
+                shininess: 10
             });
             const couch = new THREE.Mesh(couchGeometry, couchMaterial);
             couch.position.set(-5, 0.75, -7);
@@ -129,8 +133,8 @@ function init() {
             // Estante
             const bookshelfGeometry = new THREE.BoxGeometry(3, 4, 0.5);
             const bookshelfMaterial = new THREE.MeshPhongMaterial({ 
-                color: 0x8B4513,
-                shininess: 30
+                color: 0x5C3A21, // Marrom mais escuro
+                shininess: 20
             });
             const bookshelf = new THREE.Mesh(bookshelfGeometry, bookshelfMaterial);
             bookshelf.position.set(8, 2, -8);
@@ -141,8 +145,9 @@ function init() {
             // TV
             const tvGeometry = new THREE.BoxGeometry(4, 2.5, 0.2);
             const tvMaterial = new THREE.MeshPhongMaterial({ 
-                color: 0x000000,
-                shininess: 90
+                color: 0x111111,
+                shininess: 90,
+                emissive: 0x222222 // Adicionar brilho suave
             });
             const tv = new THREE.Mesh(tvGeometry, tvMaterial);
             tv.position.set(0, 3, 9.8);
@@ -152,8 +157,8 @@ function init() {
             // Rack da TV
             const rackGeometry = new THREE.BoxGeometry(5, 1, 1);
             const rackMaterial = new THREE.MeshPhongMaterial({ 
-                color: 0x8B4513,
-                shininess: 30
+                color: 0x5C3A21, // Marrom mais escuro
+                shininess: 20
             });
             const rack = new THREE.Mesh(rackGeometry, rackMaterial);
             rack.position.set(0, 0.5, 9);
