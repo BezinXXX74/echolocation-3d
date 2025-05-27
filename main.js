@@ -18,110 +18,218 @@ function init() {
 
     // Configuração da cena Three.js
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x000000); // Fundo preto
+    scene.background = new THREE.Color(0x222222);
 
     // Configuração da câmera
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     document.body.appendChild(renderer.domElement);
 
     try {
-        // Adicionar controles de órbita otimizados para touch
+        // Adicionar controles de órbita otimizados
         const controls = new THREE.OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
         controls.dampingFactor = 0.05;
-        controls.rotateSpeed = 0.5;
-        controls.pinchSpeed = 1;
-        controls.touches = {
-            ONE: THREE.TOUCH.ROTATE,
-            TWO: THREE.TOUCH.DOLLY_PAN
-        };
+        controls.screenSpacePanning = false;
+        controls.minDistance = 5;
+        controls.maxDistance = 30;
+        controls.maxPolarAngle = Math.PI / 2;
 
         // Configuração da iluminação
-        const ambientLight = new THREE.AmbientLight(0x404040);
+        const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
         scene.add(ambientLight);
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
-        directionalLight.position.set(5, 5, 5);
-        directionalLight.castShadow = true;
-        scene.add(directionalLight);
 
-        // Criação do "ambiente" (caverna)
-        const createCave = () => {
-            const caveGeometry = new THREE.IcosahedronGeometry(30, 1);
-            const caveMaterial = new THREE.MeshPhongMaterial({
-                color: 0x505050,
-                side: THREE.BackSide,
-                wireframe: true
-            });
-            const cave = new THREE.Mesh(caveGeometry, caveMaterial);
-            scene.add(cave);
+        const mainLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        mainLight.position.set(5, 5, 5);
+        mainLight.castShadow = true;
+        mainLight.shadow.mapSize.width = 2048;
+        mainLight.shadow.mapSize.height = 2048;
+        scene.add(mainLight);
+
+        // Criar chão
+        const floorGeometry = new THREE.PlaneGeometry(20, 20);
+        const floorMaterial = new THREE.MeshPhongMaterial({ 
+            color: 0x808080,
+            side: THREE.DoubleSide
+        });
+        const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+        floor.rotation.x = -Math.PI / 2;
+        floor.receiveShadow = true;
+        scene.add(floor);
+
+        // Criar paredes
+        const createWall = (width, height, depth, x, y, z) => {
+            const wallGeometry = new THREE.BoxGeometry(width, height, depth);
+            const wallMaterial = new THREE.MeshPhongMaterial({ color: 0xcccccc });
+            const wall = new THREE.Mesh(wallGeometry, wallMaterial);
+            wall.position.set(x, y, z);
+            wall.castShadow = true;
+            wall.receiveShadow = true;
+            scene.add(wall);
+            return wall;
         };
-        createCave();
+
+        // Paredes da casa
+        createWall(20, 8, 0.2, 0, 4, 10); // Parede fundo
+        createWall(20, 8, 0.2, 0, 4, -10); // Parede frente
+        createWall(0.2, 8, 20, 10, 4, 0); // Parede direita
+        createWall(0.2, 8, 20, -10, 4, 0); // Parede esquerda
+
+        // Criar móveis
+        const createFurniture = () => {
+            // Mesa
+            const tableGeometry = new THREE.BoxGeometry(3, 1, 2);
+            const tableMaterial = new THREE.MeshPhongMaterial({ color: 0x8B4513 });
+            const table = new THREE.Mesh(tableGeometry, tableMaterial);
+            table.position.set(0, 0.5, 0);
+            table.castShadow = true;
+            table.receiveShadow = true;
+            scene.add(table);
+
+            // Sofá
+            const couchGeometry = new THREE.BoxGeometry(4, 1.5, 1.5);
+            const couchMaterial = new THREE.MeshPhongMaterial({ color: 0x666666 });
+            const couch = new THREE.Mesh(couchGeometry, couchMaterial);
+            couch.position.set(-5, 0.75, -7);
+            couch.castShadow = true;
+            couch.receiveShadow = true;
+            scene.add(couch);
+
+            // Estante
+            const bookshelfGeometry = new THREE.BoxGeometry(3, 4, 0.5);
+            const bookshelfMaterial = new THREE.MeshPhongMaterial({ color: 0x8B4513 });
+            const bookshelf = new THREE.Mesh(bookshelfGeometry, bookshelfMaterial);
+            bookshelf.position.set(8, 2, -8);
+            bookshelf.castShadow = true;
+            bookshelf.receiveShadow = true;
+            scene.add(bookshelf);
+
+            // TV
+            const tvGeometry = new THREE.BoxGeometry(4, 2.5, 0.2);
+            const tvMaterial = new THREE.MeshPhongMaterial({ color: 0x000000 });
+            const tv = new THREE.Mesh(tvGeometry, tvMaterial);
+            tv.position.set(0, 3, 9.8);
+            tv.castShadow = true;
+            scene.add(tv);
+
+            // Rack da TV
+            const rackGeometry = new THREE.BoxGeometry(5, 1, 1);
+            const rackMaterial = new THREE.MeshPhongMaterial({ color: 0x8B4513 });
+            const rack = new THREE.Mesh(rackGeometry, rackMaterial);
+            rack.position.set(0, 0.5, 9);
+            rack.castShadow = true;
+            rack.receiveShadow = true;
+            scene.add(rack);
+        };
+
+        createFurniture();
 
         // Criação do "morcego" (emissor de som)
         const createBat = () => {
             const group = new THREE.Group();
 
-            // Corpo
-            const bodyGeometry = new THREE.ConeGeometry(0.5, 2, 32);
-            const bodyMaterial = new THREE.MeshPhongMaterial({ color: 0x444444 });
+            // Corpo principal (mais arredondado)
+            const bodyGeometry = new THREE.SphereGeometry(0.3, 32, 32);
+            const bodyMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0x1a1a1a,
+                shininess: 30
+            });
             const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
-            body.rotation.x = Math.PI / 2;
+            body.castShadow = true;
             group.add(body);
 
-            // Asas
-            const wingGeometry = new THREE.BoxGeometry(3, 0.1, 1);
-            const wingMaterial = new THREE.MeshPhongMaterial({ color: 0x333333 });
-            const leftWing = new THREE.Mesh(wingGeometry, wingMaterial);
-            const rightWing = new THREE.Mesh(wingGeometry, wingMaterial);
-            leftWing.position.set(-1.5, 0, 0);
-            rightWing.position.set(1.5, 0, 0);
+            // Cabeça
+            const headGeometry = new THREE.SphereGeometry(0.2, 32, 32);
+            const headMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0x1a1a1a,
+                shininess: 30
+            });
+            const head = new THREE.Mesh(headGeometry, headMaterial);
+            head.position.z = 0.25;
+            head.castShadow = true;
+            group.add(head);
+
+            // Orelhas
+            const earGeometry = new THREE.ConeGeometry(0.1, 0.2, 32);
+            const earMaterial = new THREE.MeshPhongMaterial({ color: 0x1a1a1a });
+            const leftEar = new THREE.Mesh(earGeometry, earMaterial);
+            const rightEar = new THREE.Mesh(earGeometry, earMaterial);
+            leftEar.position.set(-0.1, 0.15, 0.25);
+            rightEar.position.set(0.1, 0.15, 0.25);
+            leftEar.castShadow = true;
+            rightEar.castShadow = true;
+            group.add(leftEar);
+            group.add(rightEar);
+
+            // Asas (estrutura mais complexa)
+            const createWing = (isLeft) => {
+                const wingGroup = new THREE.Group();
+                
+                // Membrana principal
+                const mainWingGeometry = new THREE.PlaneGeometry(1.5, 0.8);
+                const wingMaterial = new THREE.MeshPhongMaterial({ 
+                    color: 0x333333,
+                    side: THREE.DoubleSide,
+                    transparent: true,
+                    opacity: 0.9
+                });
+                const mainWing = new THREE.Mesh(mainWingGeometry, wingMaterial);
+                
+                // "Dedos" da asa
+                const fingerMaterial = new THREE.MeshPhongMaterial({ color: 0x1a1a1a });
+                const createFinger = (length, angle, posX, posY) => {
+                    const fingerGeometry = new THREE.CylinderGeometry(0.02, 0.01, length);
+                    const finger = new THREE.Mesh(fingerGeometry, fingerMaterial);
+                    finger.rotation.z = angle;
+                    finger.position.set(posX, posY, 0);
+                    return finger;
+                };
+
+                // Adicionar múltiplos "dedos"
+                wingGroup.add(createFinger(1.5, 0.3, 0.4, -0.2));
+                wingGroup.add(createFinger(1.2, 0.1, 0.2, -0.1));
+                wingGroup.add(createFinger(1.0, -0.1, 0, 0));
+
+                wingGroup.add(mainWing);
+                wingGroup.position.x = isLeft ? -0.3 : 0.3;
+                wingGroup.rotation.y = isLeft ? 0.2 : -0.2;
+
+                return wingGroup;
+            };
+
+            const leftWing = createWing(true);
+            const rightWing = createWing(false);
+            leftWing.castShadow = true;
+            rightWing.castShadow = true;
             group.add(leftWing);
             group.add(rightWing);
+
+            // Adicionar animação das asas
+            const animate = () => {
+                const wingSpeed = 0.15;
+                const wingAmplitude = 0.5;
+                
+                // Animação suave das asas
+                leftWing.rotation.z = Math.sin(Date.now() * wingSpeed) * wingAmplitude;
+                rightWing.rotation.z = -Math.sin(Date.now() * wingSpeed) * wingAmplitude;
+                
+                // Pequena rotação do corpo
+                group.rotation.x = Math.sin(Date.now() * wingSpeed * 0.5) * 0.1;
+                
+                requestAnimationFrame(animate);
+            };
+            animate();
 
             return group;
         };
 
         const bat = createBat();
+        bat.position.set(0, 3, 0);
+        bat.scale.set(0.8, 0.8, 0.8); // Ajustar tamanho geral
         scene.add(bat);
-
-        // Criação de obstáculos mais interessantes
-        const createObstacle = (x, y, z) => {
-            const types = [
-                new THREE.BoxGeometry(2, 2, 2),
-                new THREE.SphereGeometry(1, 16, 16),
-                new THREE.ConeGeometry(1, 2, 16),
-                new THREE.TorusGeometry(1, 0.4, 16, 32)
-            ];
-            const geometry = types[Math.floor(Math.random() * types.length)];
-            const material = new THREE.MeshPhongMaterial({ 
-                color: 0x808080,
-                roughness: 0.7,
-                metalness: 0.3
-            });
-            const obstacle = new THREE.Mesh(geometry, material);
-            obstacle.position.set(x, y, z);
-            obstacle.rotation.set(
-                Math.random() * Math.PI,
-                Math.random() * Math.PI,
-                Math.random() * Math.PI
-            );
-            obstacle.castShadow = true;
-            obstacle.receiveShadow = true;
-            scene.add(obstacle);
-            return obstacle;
-        };
-
-        // Adicionar obstáculos em posições aleatórias
-        const obstacles = [];
-        for (let i = 0; i < 15; i++) {
-            const x = (Math.random() - 0.5) * 40;
-            const y = (Math.random() - 0.5) * 40;
-            const z = (Math.random() - 0.5) * 40;
-            obstacles.push(createObstacle(x, y, z));
-        }
 
         // Classe para criar ondas sonoras melhoradas
         class SoundWave {
@@ -136,7 +244,7 @@ function init() {
                 this.mesh = new THREE.Mesh(geometry, material);
                 this.mesh.position.copy(position);
                 this.speed = 0.3;
-                this.maxRadius = 20;
+                this.maxRadius = 15;
                 this.collisionChecked = new Set();
                 scene.add(this.mesh);
             }
@@ -149,30 +257,7 @@ function init() {
                 const currentRadius = this.mesh.scale.x * 0.1;
                 this.mesh.material.opacity = 0.8 * (1 - (currentRadius / this.maxRadius));
                 
-                this.checkCollisions();
-                
                 return currentRadius < this.maxRadius;
-            }
-
-            checkCollisions() {
-                const radius = this.mesh.scale.x * 0.1;
-                obstacles.forEach((obstacle, index) => {
-                    if (!this.collisionChecked.has(index)) {
-                        const distance = this.mesh.position.distanceTo(obstacle.position);
-                        if (distance <= radius + 1) {
-                            this.collisionChecked.add(index);
-                            this.highlightObstacle(obstacle);
-                        }
-                    }
-                });
-            }
-
-            highlightObstacle(obstacle) {
-                const originalColor = obstacle.material.color.getHex();
-                obstacle.material.color.setHex(0x00ff88);
-                setTimeout(() => {
-                    obstacle.material.color.setHex(originalColor);
-                }, 500);
             }
 
             remove() {
@@ -199,13 +284,14 @@ function init() {
 
         // Função para resetar a câmera
         window.resetCamera = () => {
-            camera.position.set(0, 5, 15);
+            camera.position.set(0, 10, 15);
             camera.lookAt(0, 0, 0);
-            controls.reset();
+            controls.target.set(0, 0, 0);
+            controls.update();
         };
 
         // Configurar controles de movimento do morcego
-        const moveSpeed = 0.3;
+        const moveSpeed = 0.2;
         const keys = {};
 
         // Controles de teclado
@@ -243,7 +329,6 @@ function init() {
                         stopMove(direction);
                     });
 
-                    // Suporte para mouse também
                     button.addEventListener('mousedown', () => startMove(direction));
                     button.addEventListener('mouseup', () => stopMove(direction));
                     button.addEventListener('mouseleave', () => stopMove(direction));
@@ -255,7 +340,7 @@ function init() {
 
         const activeMoves = setupTouchControls();
 
-        // Posicionar a câmera
+        // Posicionar a câmera inicialmente
         resetCamera();
 
         // Função de animação
@@ -266,12 +351,33 @@ function init() {
             controls.update();
             
             // Mover o morcego com base nos controles ativos
-            if (keys['ArrowLeft'] || activeMoves.has('left')) bat.position.x -= moveSpeed;
-            if (keys['ArrowRight'] || activeMoves.has('right')) bat.position.x += moveSpeed;
-            if (keys['ArrowUp'] || activeMoves.has('up')) bat.position.z -= moveSpeed;
-            if (keys['ArrowDown'] || activeMoves.has('down')) bat.position.z += moveSpeed;
-            if (keys['Shift']) bat.position.y += moveSpeed;
-            if (keys['Control']) bat.position.y -= moveSpeed;
+            const direction = new THREE.Vector3();
+            
+            if (keys['ArrowLeft'] || activeMoves.has('left')) direction.x -= 1;
+            if (keys['ArrowRight'] || activeMoves.has('right')) direction.x += 1;
+            if (keys['ArrowUp'] || activeMoves.has('up')) direction.z -= 1;
+            if (keys['ArrowDown'] || activeMoves.has('down')) direction.z += 1;
+            if (keys['Shift']) direction.y += 1;
+            if (keys['Control']) direction.y -= 1;
+
+            // Normalizar a direção e aplicar velocidade
+            if (direction.length() > 0) {
+                direction.normalize();
+                bat.position.x += direction.x * moveSpeed;
+                bat.position.y += direction.y * moveSpeed;
+                bat.position.z += direction.z * moveSpeed;
+
+                // Rotacionar o morcego na direção do movimento
+                if (direction.x !== 0 || direction.z !== 0) {
+                    const targetRotation = Math.atan2(direction.x, direction.z);
+                    bat.rotation.y = targetRotation;
+                }
+            }
+
+            // Limitar posição do morcego dentro da casa
+            bat.position.x = Math.max(-9, Math.min(9, bat.position.x));
+            bat.position.y = Math.max(1, Math.min(7, bat.position.y));
+            bat.position.z = Math.max(-9, Math.min(9, bat.position.z));
             
             // Auto-emitir ondas sonoras
             if (autoEmitEnabled && Math.random() < 0.02) {
