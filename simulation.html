@@ -2,141 +2,106 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Simulação de Ecolocalização 3D</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulação de Ecolocalização</title>
     <style>
-        body {
-            margin: 0;
+        body { 
+            margin: 0; 
             overflow: hidden;
-            background: #000;
-            touch-action: none;
+            font-family: 'Arial', sans-serif;
         }
-        canvas {
-            width: 100%;
-            height: 100%;
-        }
-        #info {
-            position: absolute;
-            top: 10px;
-            width: 100%;
-            color: white;
-            text-align: center;
-            font-family: Arial, sans-serif;
-            padding: 10px;
-            z-index: 100;
-            font-size: 16px;
+        canvas { 
+            display: block; 
         }
         #controls {
-            position: absolute;
+            position: fixed;
             bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.7);
-            padding: 10px;
-            border-radius: 15px;
-            z-index: 100;
             display: flex;
-            flex-wrap: wrap;
             gap: 10px;
-            justify-content: center;
-            width: 90%;
-            max-width: 400px;
+            z-index: 1000;
         }
         button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
             background: #4CAF50;
-            border: none;
             color: white;
-            padding: 15px 25px;
-            border-radius: 25px;
             cursor: pointer;
-            margin: 5px;
             font-size: 16px;
-            min-width: 120px;
-            touch-action: manipulation;
+            transition: background 0.3s;
         }
-        button:hover, button:active {
-            background: #45a049;
+        button:hover {
+            opacity: 0.9;
         }
-        #instructions {
-            position: absolute;
-            top: 50px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: white;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 15px;
-            border-radius: 15px;
-            font-family: Arial, sans-serif;
-            font-size: 14px;
-            text-align: center;
-            width: 90%;
-            max-width: 400px;
-        }
-        #movement-controls {
-            position: absolute;
-            bottom: 100px;
-            left: 50%;
-            transform: translateX(-50%);
+        #touch-controls {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(3, 40px);
             gap: 5px;
-            z-index: 100;
-            width: 180px;
+            z-index: 1000;
         }
-        .direction-btn {
-            background: rgba(76, 175, 80, 0.7);
-            border: none;
-            color: white;
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
+        .touch-button {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            border-radius: 5px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 24px;
-            touch-action: manipulation;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            user-select: none;
+            touch-action: none;
         }
-        .direction-btn:active {
-            background: rgba(76, 175, 80, 0.9);
-        }
-        @media (max-width: 600px) {
-            button {
-                padding: 12px 20px;
-                font-size: 14px;
-                min-width: 100px;
-            }
-            #instructions {
-                font-size: 12px;
-            }
-            .direction-btn {
-                width: 50px;
-                height: 50px;
-            }
+        #instructions {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            font-size: 14px;
+            z-index: 1000;
         }
     </style>
 </head>
 <body>
-    <div id="info">Simulação de Ecolocalização 3D</div>
     <div id="instructions">
-        📱 Arraste para girar a câmera<br>
-        🔍 Pinça para zoom<br>
-        ⬆️ Use os botões direcionais para mover
+        <h3>Controles:</h3>
+        <p>🖱️ Mouse: Girar câmera</p>
+        <p>⚡ Scroll: Zoom</p>
+        <p>⌨️ Setas: Mover morcego</p>
+        <p>⬆️ Shift: Subir</p>
+        <p>⬇️ Ctrl: Descer</p>
     </div>
-    <div id="movement-controls">
-        <div></div>
-        <button class="direction-btn" id="up">⬆️</button>
-        <div></div>
-        <button class="direction-btn" id="left">⬅️</button>
-        <button class="direction-btn" id="down">⬇️</button>
-        <button class="direction-btn" id="right">➡️</button>
-    </div>
+
     <div id="controls">
-        <button onclick="emitSoundWave()">Emitir Som</button>
-        <button onclick="toggleAutoEmit()">Auto-Emitir</button>
-        <button onclick="resetCamera()">Resetar</button>
+        <button onclick="emitSoundWave()">Emitir Onda Sonora</button>
+        <button onclick="toggleAutoEmit()">Modo Automático</button>
+        <button onclick="resetCamera()">Resetar Câmera</button>
     </div>
+
+    <div id="touch-controls">
+        <div></div>
+        <div id="up" class="touch-button">⬆️</div>
+        <div></div>
+        <div id="left" class="touch-button">⬅️</div>
+        <div></div>
+        <div id="right" class="touch-button">➡️</div>
+        <div></div>
+        <div id="down" class="touch-button">⬇️</div>
+        <div></div>
+    </div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <script src="main.js"></script>
 </body>
 </html> 
