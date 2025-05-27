@@ -1,8 +1,9 @@
 // Esperar o DOM carregar completamente
 window.addEventListener('load', init);
 
-let scene, camera, renderer;
-let bat, waves = [];
+let scene, camera, renderer, controls, bat;
+let waves = [];
+let autoEmit = false;
 
 function init() {
     // Verificar se Three.js está carregado
@@ -25,7 +26,7 @@ function init() {
 
     // Câmera
     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.z = 10;
+    camera.position.z = 5;
 
     // Renderer
     renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -38,14 +39,13 @@ function init() {
     document.body.appendChild(renderer.domElement);
 
     try {
-        // Adicionar controles de órbita otimizados
-        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        // Controles da câmera
+        controls = new THREE.OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
         controls.dampingFactor = 0.05;
         controls.screenSpacePanning = false;
-        controls.minDistance = 5;
-        controls.maxDistance = 30;
-        controls.maxPolarAngle = Math.PI / 2;
+        controls.minDistance = 3;
+        controls.maxDistance = 20;
 
         // Configuração da iluminação - apenas luz ambiente fraca
         const ambientLight = new THREE.AmbientLight(0x111111, 0.2);
@@ -175,12 +175,9 @@ function init() {
 
         createFurniture();
 
-        // Morcego
-        const batGeometry = new THREE.ConeGeometry(0.5, 1, 32);
-        const batMaterial = new THREE.MeshBasicMaterial({ 
-            color: 0x00ff00,
-            wireframe: true 
-        });
+        // Morcego (triângulo verde)
+        const batGeometry = new THREE.ConeGeometry(0.5, 1);
+        const batMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
         bat = new THREE.Mesh(batGeometry, batMaterial);
         scene.add(bat);
 
@@ -193,10 +190,8 @@ function init() {
 
         // Função para resetar a câmera
         window.resetCamera = () => {
-            camera.position.set(0, 10, 15);
-            camera.lookAt(0, 0, 0);
-            controls.target.set(0, 0, 0);
-            controls.update();
+            camera.position.set(0, 0, 5);
+            controls.reset();
         };
 
         // Posicionar a câmera inicialmente
@@ -261,19 +256,25 @@ function emitWave() {
 }
 
 function onKeyDown(event) {
-    const speed = 0.5;
+    const moveDistance = 0.1;
     switch(event.key) {
         case 'ArrowLeft':
-            bat.position.x -= speed;
+            bat.position.x -= moveDistance;
             break;
         case 'ArrowRight':
-            bat.position.x += speed;
+            bat.position.x += moveDistance;
             break;
         case 'ArrowUp':
-            bat.position.y += speed;
+            bat.position.y += moveDistance;
             break;
         case 'ArrowDown':
-            bat.position.y -= speed;
+            bat.position.y -= moveDistance;
+            break;
+        case 'Shift':
+            bat.position.z += moveDistance;
+            break;
+        case 'Control':
+            bat.position.z -= moveDistance;
             break;
         case ' ':
             emitWave();
@@ -288,8 +289,24 @@ function onWindowResize() {
 }
 
 function resetCamera() {
-    camera.position.set(0, 10, 15);
-    camera.lookAt(0, 0, 0);
-    controls.target.set(0, 0, 0);
-    controls.update();
+    camera.position.set(0, 0, 5);
+    controls.reset();
+}
+
+function createWave() {
+    const wave = new THREE.Mesh(
+        new THREE.SphereGeometry(0.1, 8, 8),
+        new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true })
+    );
+    wave.position.copy(bat.position);
+    scene.add(wave);
+    waves.push({ mesh: wave, scale: 0.1 });
+}
+
+function emitSoundWave() {
+    createWave();
+}
+
+function toggleAutoEmit() {
+    autoEmit = !autoEmit;
 } 
