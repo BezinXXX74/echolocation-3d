@@ -18,7 +18,7 @@ function init() {
 
     // Configuração da cena Three.js
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x333333); // Fundo mais escuro para melhor contraste
+    scene.background = new THREE.Color(0x000000); // Fundo totalmente preto
 
     // Configuração da câmera e renderer
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -41,8 +41,8 @@ function init() {
         controls.maxDistance = 30;
         controls.maxPolarAngle = Math.PI / 2;
 
-        // Configuração da iluminação
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.3); // Reduzir intensidade
+        // Configuração da iluminação - apenas luz ambiente fraca
+        const ambientLight = new THREE.AmbientLight(0x111111, 0.2);
         scene.add(ambientLight);
 
         // Luz principal
@@ -173,126 +173,80 @@ function init() {
         const createBat = () => {
             const group = new THREE.Group();
 
-            // Corpo principal (mais arredondado)
-            const bodyGeometry = new THREE.SphereGeometry(0.3, 32, 32);
-            const bodyMaterial = new THREE.MeshPhongMaterial({ 
-                color: 0x1a1a1a,
-                shininess: 30
+            // Corpo principal com material emissivo
+            const bodyGeometry = new THREE.ConeGeometry(0.3, 1, 32);
+            const bodyMaterial = new THREE.MeshBasicMaterial({ 
+                color: 0x444444,
+                emissive: 0x222222
             });
             const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
-            body.castShadow = true;
+            body.rotation.x = Math.PI / 2;
             group.add(body);
 
-            // Cabeça
-            const headGeometry = new THREE.SphereGeometry(0.2, 32, 32);
-            const headMaterial = new THREE.MeshPhongMaterial({ 
-                color: 0x1a1a1a,
-                shininess: 30
+            // Asas com efeito de brilho
+            const wingGeometry = new THREE.BoxGeometry(2, 0.1, 0.5);
+            const wingMaterial = new THREE.MeshBasicMaterial({ 
+                color: 0x333333,
+                emissive: 0x111111
             });
-            const head = new THREE.Mesh(headGeometry, headMaterial);
-            head.position.z = 0.25;
-            head.castShadow = true;
-            group.add(head);
-
-            // Orelhas
-            const earGeometry = new THREE.ConeGeometry(0.1, 0.2, 32);
-            const earMaterial = new THREE.MeshPhongMaterial({ color: 0x1a1a1a });
-            const leftEar = new THREE.Mesh(earGeometry, earMaterial);
-            const rightEar = new THREE.Mesh(earGeometry, earMaterial);
-            leftEar.position.set(-0.1, 0.15, 0.25);
-            rightEar.position.set(0.1, 0.15, 0.25);
-            leftEar.castShadow = true;
-            rightEar.castShadow = true;
-            group.add(leftEar);
-            group.add(rightEar);
-
-            // Asas (estrutura mais complexa)
-            const createWing = (isLeft) => {
-                const wingGroup = new THREE.Group();
-                
-                // Membrana principal
-                const mainWingGeometry = new THREE.PlaneGeometry(1.5, 0.8);
-                const wingMaterial = new THREE.MeshPhongMaterial({ 
-                    color: 0x333333,
-                    side: THREE.DoubleSide,
-                    transparent: true,
-                    opacity: 0.9
-                });
-                const mainWing = new THREE.Mesh(mainWingGeometry, wingMaterial);
-                mainWing.rotation.x = Math.PI / 2; // Rotacionar para ficar na horizontal
-                
-                // "Dedos" da asa
-                const fingerMaterial = new THREE.MeshPhongMaterial({ color: 0x1a1a1a });
-                const createFinger = (length, angle, posX, posY) => {
-                    const fingerGeometry = new THREE.CylinderGeometry(0.02, 0.01, length);
-                    const finger = new THREE.Mesh(fingerGeometry, fingerMaterial);
-                    finger.rotation.x = Math.PI / 2; // Alinhar com a membrana
-                    finger.rotation.z = angle;
-                    finger.position.set(posX, 0, posY); // Ajustar posição para novo sistema de coordenadas
-                    return finger;
-                };
-
-                // Adicionar múltiplos "dedos" com posições ajustadas
-                wingGroup.add(createFinger(1.5, 0.3, 0.4, -0.2));
-                wingGroup.add(createFinger(1.2, 0.1, 0.2, -0.1));
-                wingGroup.add(createFinger(1.0, -0.1, 0, 0));
-
-                wingGroup.add(mainWing);
-                wingGroup.position.x = isLeft ? -0.3 : 0.3;
-                wingGroup.position.y = 0.1; // Levantar um pouco as asas
-                wingGroup.rotation.z = isLeft ? -0.2 : 0.2; // Ajustar ângulo inicial
-
-                return wingGroup;
-            };
-
-            const leftWing = createWing(true);
-            const rightWing = createWing(false);
-            leftWing.castShadow = true;
-            rightWing.castShadow = true;
+            const leftWing = new THREE.Mesh(wingGeometry, wingMaterial);
+            const rightWing = new THREE.Mesh(wingGeometry, wingMaterial);
+            leftWing.position.set(-1, 0, 0);
+            rightWing.position.set(1, 0, 0);
             group.add(leftWing);
             group.add(rightWing);
 
-            // Adicionar animação das asas
-            const animate = () => {
-                const wingSpeed = 0.08; // Reduzir velocidade
-                const wingAmplitude = 0.3; // Reduzir amplitude
-                
-                // Animação suave das asas
-                const wingAngle = Math.sin(Date.now() * wingSpeed) * wingAmplitude;
-                leftWing.rotation.z = -0.2 - wingAngle; // Adicionar ao ângulo base
-                rightWing.rotation.z = 0.2 + wingAngle;
-                
-                // Pequena oscilação do corpo
-                group.rotation.x = Math.sin(Date.now() * wingSpeed * 0.5) * 0.05;
-                
-                requestAnimationFrame(animate);
-            };
-            animate();
+            // Adicionar pequena luz ao morcego
+            const batLight = new THREE.PointLight(0x00ff88, 0.5, 3);
+            batLight.position.set(0, 0, 0);
+            group.add(batLight);
 
             return group;
         };
 
         const bat = createBat();
         bat.position.set(0, 3, 0);
-        bat.scale.set(0.6, 0.6, 0.6); // Reduzir um pouco o tamanho
         scene.add(bat);
 
         // Classe para criar ondas sonoras melhoradas
         class SoundWave {
             constructor(position) {
-                const geometry = new THREE.IcosahedronGeometry(0.1, 1);
+                // Geometria mais complexa para melhor visualização
+                const geometry = new THREE.IcosahedronGeometry(0.1, 2);
                 const material = new THREE.MeshBasicMaterial({
                     color: 0x00ff88,
                     transparent: true,
-                    opacity: 0.6,
-                    wireframe: true
+                    opacity: 0.8,
+                    wireframe: true,
+                    wireframeLinewidth: 2
                 });
                 this.mesh = new THREE.Mesh(geometry, material);
                 this.mesh.position.copy(position);
+                
+                // Adicionar brilho (glow effect)
+                const glowGeometry = new THREE.IcosahedronGeometry(0.12, 2);
+                const glowMaterial = new THREE.MeshBasicMaterial({
+                    color: 0x00ff88,
+                    transparent: true,
+                    opacity: 0.3,
+                    side: THREE.BackSide
+                });
+                this.glow = new THREE.Mesh(glowGeometry, glowMaterial);
+                this.mesh.add(this.glow);
+
                 this.speed = 0.3;
                 this.maxRadius = 15;
-                this.collisionChecked = new Set();
                 scene.add(this.mesh);
+
+                // Adicionar linhas de rastreamento
+                const lineGeometry = new THREE.BufferGeometry();
+                const lineMaterial = new THREE.LineBasicMaterial({
+                    color: 0x00ff88,
+                    transparent: true,
+                    opacity: 0.3
+                });
+                this.lines = new THREE.Line(lineGeometry, lineMaterial);
+                scene.add(this.lines);
             }
 
             update() {
@@ -301,13 +255,31 @@ function init() {
                 this.mesh.scale.z += this.speed;
                 
                 const currentRadius = this.mesh.scale.x * 0.1;
-                this.mesh.material.opacity = 0.8 * (1 - (currentRadius / this.maxRadius));
+                const opacity = 1 - (currentRadius / this.maxRadius);
                 
+                this.mesh.material.opacity = opacity * 0.8;
+                this.glow.material.opacity = opacity * 0.3;
+                
+                // Atualizar linhas de rastreamento
+                const positions = [];
+                for (let i = 0; i < 32; i++) {
+                    const angle = (i / 32) * Math.PI * 2;
+                    const radius = currentRadius;
+                    positions.push(
+                        Math.cos(angle) * radius + this.mesh.position.x,
+                        Math.sin(angle) * radius + this.mesh.position.y,
+                        this.mesh.position.z
+                    );
+                }
+                this.lines.geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+                this.lines.material.opacity = opacity * 0.3;
+
                 return currentRadius < this.maxRadius;
             }
 
             remove() {
                 scene.remove(this.mesh);
+                scene.remove(this.lines);
             }
         }
 
